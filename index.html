@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css"/>
+  <title>ระบบจัดการสต็อกสินค้า</title>
+<style>
+    /* กำหนดพื้นฐานของการแสดงผล */
+    
+
+      input[type="text"], input[type="number"], button {
+        font-size: 14px;
+      }
+  </style>
+  
+</head>
+<body>
+  <h1>ระบบจัดการสต็อกสินค้า Cckc</h1>
+
+  <div>
+    <h2>เพิ่ม/แก้ไขสินค้า</h2>
+    <form id="product-form">
+      <input type="hidden" id="product-id">
+      <input type="text" id="product-name" placeholder="ชื่อสินค้า" required>
+      <input type="number" id="product-quantity" placeholder="จำนวนสินค้า" required>
+      <button type="submit">เพิ่ม/แก้ไขสินค้า</button>
+    </form>
+  </div>
+
+  <h2>รายการสินค้าทั้งหมด</h2>
+  <table id="product-table">
+    <thead>
+      <tr>
+        <th>ชื่อสินค้า</th>
+        <th>จำนวนสินค้า</th>
+        <th>แก้ไข/ลบ</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- รายการสินค้าจะถูกแสดงที่นี่ -->
+    </tbody>
+  </table>
+
+  <script>
+    // ฟังก์ชันที่ใช้ในการดึงข้อมูลสินค้าจาก LocalStorage และแสดงในตาราง
+    function renderTable() {
+      const products = JSON.parse(localStorage.getItem('products')) || [];
+      const tableBody = document.querySelector('#product-table tbody');
+      tableBody.innerHTML = ''; // เคลียร์ข้อมูลเก่า
+      products.forEach((product, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${product.name}</td>
+          <td>${product.quantity}</td>
+          <td>
+            <button onclick="editProduct(${index})">แก้ไข</button>
+            <button onclick="deleteProduct(${index})">ลบ</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // ฟังก์ชันสำหรับเพิ่มหรือแก้ไขสินค้า
+    document.getElementById('product-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('product-name').value;
+      const quantity = document.getElementById('product-quantity').value;
+      const productId = document.getElementById('product-id').value;
+
+      const products = JSON.parse(localStorage.getItem('products')) || [];
+
+      if (productId) {
+        // แก้ไขสินค้า
+        products[productId] = { name, quantity: parseInt(quantity) };
+      } else {
+        // เพิ่มสินค้าใหม่
+        products.push({ name, quantity: parseInt(quantity) });
+      }
+
+      localStorage.setItem('products', JSON.stringify(products));
+      renderTable();
+      document.getElementById('product-form').reset();
+      document.getElementById('product-id').value = '';
+    });
+
+    // ฟังก์ชันสำหรับแก้ไขสินค้า
+    function editProduct(index) {
+      const products = JSON.parse(localStorage.getItem('products'));
+      const product = products[index];
+      document.getElementById('product-name').value = product.name;
+      document.getElementById('product-quantity').value = product.quantity;
+      document.getElementById('product-id').value = index;
+    }
+
+    // ฟังก์ชันสำหรับลบสินค้า
+    function deleteProduct(index) {
+      const products = JSON.parse(localStorage.getItem('products'));
+      products.splice(index, 1);
+      localStorage.setItem('products', JSON.stringify(products));
+      renderTable();
+    }
+
+    // เรียกใช้ฟังก์ชันในการแสดงผลข้อมูลสินค้าหลังจากโหลดหน้า
+    renderTable();
+
+    const googleScriptURL = 'https://docs.google.com/spreadsheets/d/16WGajWX_j913yEZvCEoOnCr8mnM5qbfPOJXZk37pSBU/edit?gid=0#gid=0'; // ใส่ URL ของ Web App ที่ได้รับจาก Google Apps Script
+
+    // ฟังก์ชันในการส่งข้อมูลไปที่ Google Sheets ผ่าน Web App
+    document.getElementById('product-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('product-name').value;
+      const quantity = document.getElementById('product-quantity').value;
+
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('quantity', quantity);
+
+      fetch(googleScriptURL, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        alert("ข้อมูลได้ถูกบันทึกใน Google Sheets");
+        console.log(data);
+        document.getElementById('product-form').reset();
+      })
+      .catch(error => {
+        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        console.error('Error:', error);
+      });
+    });
+  </script>
+</body>
+</html>
+
+  </script>
+</body>
+</html>
