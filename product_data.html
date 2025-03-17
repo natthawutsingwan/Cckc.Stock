@@ -6,36 +6,38 @@
   <title>ข้อมูลสินค้า</title>
 </head>
 <body>
-  <h1>รายการสินค้าที่ถูกเพิ่มหรือแก้ไข</h1>
-  
-  <ul id="product-list">
-    <!-- ข้อมูลสินค้าจะแสดงที่นี่ -->
-  </ul>
+  <h1>ข้อมูลสินค้า</h1>
+  <table id="product-table">
+    <thead>
+      <tr>
+        <th>ชื่อสินค้า</th>
+        <th>จำนวนสินค้า</th>
+        <th>วันที่แก้ไข</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- รายการสินค้าจะแสดงที่นี่ -->
+    </tbody>
+  </table>
 
   <script>
-    // ฟังก์ชันเพื่อดึงข้อมูลสินค้าจาก localStorage
-    function renderProductList() {
+    function renderTable() {
       const products = JSON.parse(localStorage.getItem('products')) || [];
-      const productList = document.getElementById('product-list');
-      
-      // แสดงสินค้าทุกตัวในรายการ
-      products.forEach((product, index) => {
-        const listItem = document.createElement('li');
-        
-        // รับวันที่และเวลาในรูปแบบที่ต้องการ
-        const currentDate = new Date();
-        const dateTime = `${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}`;
-        
-        listItem.textContent = `${index + 1}. ${product.name} จำนวน ${product.quantity} (เพิ่ม/แก้ไขเมื่อ: ${dateTime})`;
-        productList.appendChild(listItem);
+      const tableBody = document.querySelector('#product-table tbody');
+      tableBody.innerHTML = '';
+      products.forEach((product) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${product.name}</td>
+          <td>${product.quantity}</td>
+          <td>${product.updatedAt}</td>
+        `;
+        tableBody.appendChild(row);
       });
     }
 
-    // เรียกใช้งานฟังก์ชันเมื่อหน้าโหลด
-    window.onload = renderProductList;
+    renderTable();
   </script>
+
 </body>
 </html>
-
-
-
