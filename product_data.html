@@ -1,3 +1,39 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ข้อมูลสินค้า</title>
+</head>
+<body>
+  <h1>รายการสินค้าที่ถูกเพิ่มหรือแก้ไข</h1>
+  
+  <ul id="product-list">
+    <!-- ข้อมูลสินค้าจะแสดงที่นี่ -->
+  </ul>
+
+  <script>
+    // ฟังก์ชันเพื่อดึงข้อมูลสินค้าจาก localStorage
+    function renderProductList() {
+      const products = JSON.parse(localStorage.getItem('products')) || [];
+      const productList = document.getElementById('product-list');
+      
+      // แสดงสินค้าทุกตัวในรายการ
+      products.forEach((product, index) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${index + 1}. ${product.name} จำนวน ${product.quantity}`;
+        productList.appendChild(listItem);
+      });
+    }
+
+    // เรียกใช้งานฟังก์ชันเมื่อหน้าโหลด
+    window.onload = renderProductList;
+  </script>
+</body>
+</html>
+
+
+
 <html><head><title>Product Data</title>
 </head><body>
     <h1>Product List</h1>
