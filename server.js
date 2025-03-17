@@ -57,3 +57,37 @@ app.delete('/api/products/:id', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running at https://github.com/natthawutsingwan/Cckc.Stock/blob/main/data`);
 });
+
+
+//เรียกข้อมูล
+fetch('https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv')
+  .then(response => response.text())
+  .then(csvData => {
+    const products = parseCSV(csvData);
+    renderTable(products);
+  });
+
+function parseCSV(csvData) {
+  const rows = csvData.split('\n');
+  return rows.slice(1).map(row => {
+    const [name, quantity] = row.split(',');
+    return { name, quantity };
+  });
+}
+
+function renderTable(products) {
+  const tableBody = document.querySelector('#product-table tbody');
+  tableBody.innerHTML = '';
+  products.forEach(product => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${product.name}</td>
+      <td>${product.quantity}</td>
+      <td>
+        <button>แก้ไข</button>
+        <button>ลบ</button>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
