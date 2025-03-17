@@ -17,7 +17,7 @@
   <div>
     <h2>เพิ่ม/แก้ไขสินค้า</h2>
     <form id="product-form">
-      <input type="text" id="user-id" placeholder="ID ผู้ใช้" required>
+      <input type="hidden" id="product-id">
       <input type="text" id="product-name" placeholder="ชื่อสินค้า" required>
       <input type="number" id="product-quantity" placeholder="จำนวนสินค้า" required>
       <button type="submit">เพิ่ม/แก้ไขสินค้า</button>
@@ -30,18 +30,20 @@
       <tr>
         <th>ชื่อสินค้า</th>
         <th>จำนวนสินค้า</th>
+        <th>วันที่แก้ไข</th>
         <th>แก้ไข/ลบ</th>
       </tr>
     </thead>
     <tbody>
-      <!-- รายการสินค้าจะแสดงที่นี่ -->
+      <!-- รายการสินค้าจะถูกแสดงที่นี่ -->
     </tbody>
   </table>
 
   <script>
+    const googleScriptURL = 'https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv';
+
     function renderTable() {
-      const userId = document.getElementById('user-id').value;
-      const products = JSON.parse(localStorage.getItem(userId)) || [];
+      const products = JSON.parse(localStorage.getItem('products')) || [];
       const tableBody = document.querySelector('#product-table tbody');
       tableBody.innerHTML = '';
       products.forEach((product, index) => {
@@ -49,6 +51,7 @@
         row.innerHTML = `
           <td>${product.name}</td>
           <td>${product.quantity}</td>
+          <td>${product.updatedAt}</td>
           <td>
             <button onclick="editProduct(${index})">แก้ไข</button>
             <button onclick="deleteProduct(${index})">ลบ</button>
@@ -58,42 +61,69 @@
       });
     }
 
-    function saveProduct(name, quantity) {
-      const userId = document.getElementById('user-id').value;
-      const products = JSON.parse(localStorage.getItem(userId)) || [];
-      products.push({ name, quantity });
-      localStorage.setItem(userId, JSON.stringify(products));
-      renderTable();
+    function saveToGoogleSheets(name, quantity) {
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('quantity', quantity);
+
+      fetch(googleScriptURL, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log("บันทึกลง Google Sheets สำเร็จ:", data);
+      })
+      .catch(error => {
+        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
+      });
     }
 
     document.getElementById('product-form').addEventListener('submit', function(event) {
       event.preventDefault();
-      const userId = document.getElementById('user-id').value;
+
       const name = document.getElementById('product-name').value;
       const quantity = parseInt(document.getElementById('product-quantity').value);
-      saveProduct(name, quantity);
+      const productId = document.getElementById('product-id').value;
+
+      const products = JSON.parse(localStorage.getItem('products')) || [];
+      const updatedAt = new Date().toLocaleString(); // เพิ่มเวลาที่แก้ไขข้อมูล
+
+      if (productId) {
+        products[productId] = { name, quantity, updatedAt };
+      } else {
+        products.push({ name, quantity, updatedAt });
+      }
+
+      localStorage.setItem('products', JSON.stringify(products));
+      renderTable();
+
+      saveToGoogleSheets(name, quantity);
+
       document.getElementById('product-form').reset();
+      document.getElementById('product-id').value = '';
     });
 
     function editProduct(index) {
-      const userId = document.getElementById('user-id').value;
-      const products = JSON.parse(localStorage.getItem(userId));
+      const products = JSON.parse(localStorage.getItem('products'));
       const product = products[index];
       document.getElementById('product-name').value = product.name;
       document.getElementById('product-quantity').value = product.quantity;
-      // เพิ่ม ID ผู้ใช้เพื่อให้สามารถแก้ไขสินค้าผู้ใช้คนเดียวได้
-      document.getElementById('user-id').value = userId;
+      document.getElementById('product-id').value = index;
     }
 
     function deleteProduct(index) {
-      const userId = document.getElementById('user-id').value;
-      const products = JSON.parse(localStorage.getItem(userId));
+      const products = JSON.parse(localStorage.getItem('products'));
       products.splice(index, 1);
-      localStorage.setItem(userId, JSON.stringify(products));
+      localStorage.setItem('products', JSON.stringify(products));
       renderTable();
     }
 
     renderTable();
   </script>
+
+  <!-- ปุ่มกดเพื่อเปิดไฟล์ product_data.html -->
+  <button onclick="window.open('product_data.html', '_blank')">ดูข้อมูลสินค้า</button>
+
 </body>
 </html>
