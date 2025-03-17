@@ -39,18 +39,18 @@ form {
 input[type="text"], input[type="number"] {
     padding: 12px;
     margin: 10px ;
-    width: 50px fit-content;
     border: 2px solid #00c3ff;
     border-radius: 15px;
     font-size: 16px;
+    width: 100% fit-content;
 }
 
 button {
     background-color: #4CAF50;
     color: white;
     margin-bottom: auto;
-    width: 50px fit-content;
-    padding: 14px 200px;
+    width: 100% fit-content;
+    padding: 14px 20px;
     font-size: 16px;
     border: 2px solid #01e201;
     border-radius: 50px;
@@ -68,6 +68,7 @@ table {
     width: 100% ;
     border-collapse: collapse;
     margin-top: 30px;
+    
 }
 
 table, th, td {
