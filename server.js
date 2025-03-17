@@ -1,9 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
+
+// ใช้ Middleware
+app.use(bodyParser.json());
+app.use(cors()); // เพิ่มการรองรับ CORS
 
 // เชื่อมต่อกับ MongoDB
 mongoose.connect('mongodb://localhost:27017/stock', {
@@ -11,6 +16,7 @@ mongoose.connect('mongodb://localhost:27017/stock', {
   useUnifiedTopology: true
 });
 
+// สร้าง Schema และ Model สำหรับสินค้า
 const productSchema = new mongoose.Schema({
   name: String,
   quantity: Number
@@ -18,9 +24,11 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model('Product', productSchema);
 
-// Middleware
-app.use(bodyParser.json());
-app.use(express.static('public')); // ให้หน้า HTML อยู่ในโฟลเดอร์ public
+// API สำหรับดึงข้อมูลสินค้าทั้งหมด
+app.get('/api/products', async (req, res) => {
+  const products = await Product.find();
+  res.json(products);
+});
 
 // API สำหรับเพิ่มสินค้า
 app.post('/api/products', async (req, res) => {
@@ -43,12 +51,6 @@ app.delete('/api/products/:id', async (req, res) => {
   const { id } = req.params;
   await Product.findByIdAndDelete(id);
   res.status(204).end();
-});
-
-// API สำหรับดึงข้อมูลสินค้าทั้งหมด
-app.get('/api/products', async (req, res) => {
-  const products = await Product.find();
-  res.json(products);
 });
 
 // เริ่มเซิร์ฟเวอร์
