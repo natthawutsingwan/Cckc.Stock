@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ</title>
+</head>
+<body>
+  <h1>เข้าสู่ระบบ</h1>
+  
+  <form id="login-form">
+    <input type="tel" id="phone-number" placeholder="เบอร์โทรศัพท์" required>
+    <input type="password" id="password" placeholder="รหัสผ่าน" required>
+    <button type="submit">เข้าสู่ระบบ</button>
+  </form>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const phoneNumber = document.getElementById('phone-number').value;
+      const password = document.getElementById('password').value;
+
+      // ตรวจสอบข้อมูลการล็อกอิน
+      const users = JSON.parse(localStorage.getItem('users')) || [];
+      const user = users.find(u => u.phone === phoneNumber && u.password === password);
+
+      if (user) {
+        alert('เข้าสู่ระบบสำเร็จ!');
+        // เปลี่ยนหน้าไปที่หน้าแดชบอร์ดหรือหน้าหลัก
+        window.location.href = 'dashboard.html';
+      } else {
+        alert('ข้อมูลล็อกอินไม่ถูกต้อง');
+      }
+    });
+  </script>
+</body>
+</html>
