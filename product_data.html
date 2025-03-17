@@ -21,7 +21,12 @@
       // แสดงสินค้าทุกตัวในรายการ
       products.forEach((product, index) => {
         const listItem = document.createElement('li');
-        listItem.textContent = `${index + 1}. ${product.name} จำนวน ${product.quantity}`;
+        
+        // รับวันที่และเวลาในรูปแบบที่ต้องการ
+        const currentDate = new Date();
+        const dateTime = `${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}`;
+        
+        listItem.textContent = `${index + 1}. ${product.name} จำนวน ${product.quantity} (เพิ่ม/แก้ไขเมื่อ: ${dateTime})`;
         productList.appendChild(listItem);
       });
     }
@@ -31,7 +36,6 @@
   </script>
 </body>
 </html>
-
 
 
 
