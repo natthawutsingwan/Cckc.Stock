@@ -55,5 +55,5 @@ app.delete('/api/products/:id', async (req, res) => {
 
 // เริ่มเซิร์ฟเวอร์
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server running at https://github.com/natthawutsingwan/Cckc.Stock/blob/main/data`);
 });
