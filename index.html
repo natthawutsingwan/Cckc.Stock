@@ -19,7 +19,7 @@
     <form id="product-form">
       <input type="hidden" id="product-id">
       <input type="text" id="product-name" placeholder="ชื่อสินค้า" required>
-      <input type="number" id="product-quantity" placeholder="จำนวนสินค้า" required min="1">
+      <input type="number" id="product-quantity" placeholder="จำนวนสินค้า" required>
       <button type="submit">เพิ่ม/แก้ไขสินค้า</button>
     </form>
   </div>
@@ -39,82 +39,86 @@
   </table>
 
   <script>
-    const apiBaseUrl = 'https://github.com/natthawutsingwan/Cckc.Stock/blob/main/data'; // URL ของ API เซิร์ฟเวอร์
+    const googleScriptURL = 'https://github.com/natthawutsingwan/Cckc.Stock/blob/main/data';
 
-    // ฟังก์ชันสำหรับแสดงข้อมูลสินค้าทั้งหมด
-    async function renderTable() {
-      const response = await fetch(apiBaseUrl);
-      const products = await response.json();
+    function renderTable() {
+      const products = JSON.parse(localStorage.getItem('products')) || [];
       const tableBody = document.querySelector('#product-table tbody');
       tableBody.innerHTML = '';
-      products.forEach((product) => {
+      products.forEach((product, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${product.name}</td>
           <td>${product.quantity}</td>
           <td>
-            <button onclick="editProduct('${product._id}')">แก้ไข</button>
-            <button onclick="deleteProduct('${product._id}')">ลบ</button>
+            <button onclick="editProduct(${index})">แก้ไข</button>
+            <button onclick="deleteProduct(${index})">ลบ</button>
           </td>
         `;
         tableBody.appendChild(row);
       });
     }
 
-    // ฟังก์ชันเพิ่ม/แก้ไขสินค้า
-    document.getElementById('product-form').addEventListener('submit', async function(event) {
+    function saveToGoogleSheets(name, quantity) {
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('quantity', quantity);
+
+      fetch(googleScriptURL, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log("บันทึกลง Google Sheets สำเร็จ:", data);
+      })
+      .catch(error => {
+        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
+      });
+    }
+
+    document.getElementById('product-form').addEventListener('submit', function(event) {
       event.preventDefault();
 
       const name = document.getElementById('product-name').value;
       const quantity = parseInt(document.getElementById('product-quantity').value);
       const productId = document.getElementById('product-id').value;
 
-      if (!name || isNaN(quantity) || quantity < 1) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-        return;
-      }
-
-      const productData = { name, quantity };
+      const products = JSON.parse(localStorage.getItem('products')) || [];
 
       if (productId) {
-        // แก้ไขสินค้า
-        await fetch(`${apiBaseUrl}/${productId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData)
-        });
+        products[productId] = { name, quantity };
       } else {
-        // เพิ่มสินค้าใหม่
-        await fetch(apiBaseUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData)
-        });
+        products.push({ name, quantity });
       }
 
+      localStorage.setItem('products', JSON.stringify(products));
       renderTable();
+
+      saveToGoogleSheets(name, quantity);
+
       document.getElementById('product-form').reset();
       document.getElementById('product-id').value = '';
     });
 
-    // ฟังก์ชันแก้ไขสินค้า
-    function editProduct(productId) {
-      fetch(`${apiBaseUrl}/${productId}`)
-        .then(response => response.json())
-        .then(product => {
-          document.getElementById('product-name').value = product.name;
-          document.getElementById('product-quantity').value = product.quantity;
-          document.getElementById('product-id').value = product._id;
-        });
+    function editProduct(index) {
+      const products = JSON.parse(localStorage.getItem('products'));
+      const product = products[index];
+      document.getElementById('product-name').value = product.name;
+      document.getElementById('product-quantity').value = product.quantity;
+      document.getElementById('product-id').value = index;
     }
 
-    // ฟังก์ชันลบสินค้า
-    async function deleteProduct(productId) {
-      await fetch(`${apiBaseUrl}/${productId}`, { method: 'DELETE' });
+    function deleteProduct(index) {
+      const products = JSON.parse(localStorage.getItem('products'));
+      products.splice(index, 1);
+      localStorage.setItem('products', JSON.stringify(products));
       renderTable();
     }
 
     renderTable();
   </script>
+
+  
 </body>
 </html>
