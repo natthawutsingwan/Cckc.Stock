@@ -5,11 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css"/>
   <title>ระบบจัดการสต็อกสินค้า</title>
-  <style>
-    input[type="text"], input[type="number"], button {
-      font-size: 14px;
+  <style>input[type="text"], input[type="number"], button {font-size: 14px;}</style>
+  <script>
+  function checkAuth() {
+    const loggedInUser = localStorage.getItem('loggedInUser');
+    if (!loggedInUser) {
+      alert('กรุณาเข้าสู่ระบบก่อน!');
+      window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
     }
-  </style>
+  }
+  function logout() {
+    localStorage.removeItem('loggedInUser'); // ลบสถานะล็อกอิน
+    alert('ออกจากระบบเรียบร้อย!');
+    window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
+  }
+   checkAuth();
+</script>
+  
+<button onclick="logout()">ออกจากระบบ</button>
+
 </head>
 <body>
   <h1>ระบบจัดการสต็อกสินค้า CCKC</h1>
