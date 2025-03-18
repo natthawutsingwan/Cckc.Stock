@@ -16,11 +16,24 @@
     <form id="login-form">
       <input type="text" id="phone" placeholder="เบอร์โทร" required>
       <input type="password" id="password" placeholder="รหัสผ่าน" required>
-      <label> <input type="checkbox" id="remember-me"> จำรหัสผ่าน </label>
+      <label>
+        <input type="checkbox" id="remember-me"> จำรหัสผ่าน
+      </label>
       <button type="submit">เข้าสู่ระบบ</button>
     </form>
     <p><a href="#" onclick="showForgotPassword()">ลืมรหัสผ่าน</a></p>
-    <p><a href="#" onclick="showRegister()">สมัครสมาชิก</a></p>
+    <p> <a href="#" onclick="showRegister()">สมัครสมาชิก</a></p>
+  </div>
+
+  <!-- ฟอร์มสมัครสมาชิก -->
+  <div id="register-section" class="container" style="display:none;">
+    <h2>สมัครสมาชิก</h2>
+    <form id="register-form">
+      <input type="text" id="reg-phone" placeholder="เบอร์โทร" required>
+      <input type="password" id="reg-password" placeholder="รหัสผ่าน" required>
+      <button type="submit">สมัครสมาชิก</button>
+    </form>
+    <p><a href="#" onclick="showLogin()">กลับไปเข้าสู่ระบบ</a></p>
   </div>
 
   <!-- ฟอร์มลืมรหัสผ่าน -->
@@ -36,21 +49,24 @@
   <script>
     function showRegister() {
       document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('register-section').style.display = 'block';
       document.getElementById('forgot-password-section').style.display = 'none';
     }
 
     function showLogin() {
       document.getElementById('auth-section').style.display = 'block';
+      document.getElementById('register-section').style.display = 'none';
       document.getElementById('forgot-password-section').style.display = 'none';
     }
 
     function showForgotPassword() {
       document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('register-section').style.display = 'none';
       document.getElementById('forgot-password-section').style.display = 'block';
     }
 
     function encryptPassword(password) {
-      return btoa(password);  // ใช้ Base64 (ควรใช้ Hash จริงจัง)
+      return btoa(password);
     }
 
     function checkLogin() {
@@ -71,6 +87,24 @@
       }
     }
 
+    document.getElementById('register-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+      const users = JSON.parse(localStorage.getItem('users')) || {};
+
+      if (users[phone]) {
+        alert('เบอร์นี้มีบัญชีอยู่แล้ว!');
+        return;
+      }
+
+      users[phone] = encryptPassword(password);
+      localStorage.setItem('users', JSON.stringify(users));
+
+      alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+      showLogin();
+    });
+
     document.getElementById('login-form').addEventListener('submit', function(event) {
       event.preventDefault();
       const phone = document.getElementById('phone').value.trim();
@@ -80,7 +114,7 @@
 
       if (users[phone] && users[phone] === encryptPassword(password)) {
         localStorage.setItem('loggedInUser', phone);
-        
+
         if (rememberMe) {
           localStorage.setItem('rememberedPhone', phone);
           localStorage.setItem('rememberedPassword', encryptPassword(password));
