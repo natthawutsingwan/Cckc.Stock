@@ -6,6 +6,30 @@
   <link rel="stylesheet" href="style.css"/>
   <title>ระบบจัดการสต็อกสินค้า</title>
   <style>input[type="text"], input[type="number"], button {font-size: 14px;}</style>
+<script src="https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv"></script>
+<script src="https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv"></script>
+<script src="https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv"></script>
+
+<script>
+// ตั้งค่า Firebase
+const firebaseConfig = {
+  apiKey: "API_KEY",
+  authDomain: "PROJECT_ID.firebaseapp.com",
+  projectId: "PROJECT_ID",
+  storageBucket: "PROJECT_ID.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+</script>
+
+
+
+
+
+  
   <script>
   function checkAuth() {
     const loggedInUser = localStorage.getItem('loggedInUser');
