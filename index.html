@@ -4,128 +4,119 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบจัดการสต็อกสินค้า</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    input, button {
-      display: block;
-      margin: 10px auto;
-      padding: 10px;
-      font-size: 14px;
-      width: 80%;
-    }
-    button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #218838;
-    }
-    .container {
-      max-width: 400px;
-      margin: auto;
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-    }
-  </style>
+  <link rel="stylesheet" href="static/stylelogin.css"/>
 </head>
 <body>
 
   <h1>ระบบจัดการสต็อกสินค้า CCKC</h1>
 
+  <!-- ฟอร์มเข้าสู่ระบบ -->
   <div id="auth-section" class="container">
     <h2>เข้าสู่ระบบ</h2>
     <form id="login-form">
       <input type="text" id="phone" placeholder="เบอร์โทร" required>
       <input type="password" id="password" placeholder="รหัสผ่าน" required>
+      <label> <input type="checkbox" id="remember-me"> จำรหัสผ่าน </label>
       <button type="submit">เข้าสู่ระบบ</button>
     </form>
-    <p><a href="#" onclick="showForgotPassword()">ลืมรหัสผ่าน?</a></p>
-    <p>ยังไม่มีบัญชี? <a href="#" onclick="showRegister()">สมัครสมาชิก</a></p>
+    <p><a href="#" onclick="showForgotPassword()">ลืมรหัสผ่าน</a></p>
+    <p><a href="#" onclick="showRegister()">สมัครสมาชิก</a></p>
   </div>
 
-  <div id="register-section" class="container" style="display:none;">
-    <h2>สมัครสมาชิก</h2>
-    <form id="register-form">
-      <input type="text" id="reg-phone" placeholder="เบอร์โทร" required>
-      <input type="password" id="reg-password" placeholder="รหัสผ่าน" required>
-      <button type="submit">สมัครสมาชิก</button>
+  <!-- ฟอร์มลืมรหัสผ่าน -->
+  <div id="forgot-password-section" class="container" style="display:none;">
+    <h2>ลืมรหัสผ่าน</h2>
+    <form id="forgot-password-form">
+      <input type="text" id="forgot-phone" placeholder="เบอร์โทร" required>
+      <button type="submit">รีเซ็ตรหัสผ่าน</button>
     </form>
-    <p>มีบัญชีแล้ว? <a href="#" onclick="showLogin()">เข้าสู่ระบบ</a></p>
+    <p><a href="#" onclick="showLogin()">กลับไปเข้าสู่ระบบ</a></p>
   </div>
 
   <script>
     function showRegister() {
       document.getElementById('auth-section').style.display = 'none';
-      document.getElementById('register-section').style.display = 'block';
+      document.getElementById('forgot-password-section').style.display = 'none';
     }
 
     function showLogin() {
       document.getElementById('auth-section').style.display = 'block';
-      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('forgot-password-section').style.display = 'none';
+    }
+
+    function showForgotPassword() {
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('forgot-password-section').style.display = 'block';
     }
 
     function encryptPassword(password) {
-      return btoa(password);  // เข้ารหัส Base64 (ควรใช้ hashing จริงจังมากกว่านี้)
+      return btoa(password);  // ใช้ Base64 (ควรใช้ Hash จริงจัง)
     }
 
-    // ตรวจสอบว่าผู้ใช้ล็อกอินหรือยัง
     function checkLogin() {
       const loggedInUser = localStorage.getItem('loggedInUser');
       if (loggedInUser) {
-        window.location.href = 'stock_management.html'; // ไปยังหน้าหลักถ้าล็อกอินแล้ว
+        window.location.href = 'stock_management.html'; 
       }
     }
 
-    // สมัครสมาชิก
-    document.getElementById('register-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const phone = document.getElementById('reg-phone').value.trim();
-      const password = document.getElementById('reg-password').value.trim();
+    function loadRememberedUser() {
+      const rememberedPhone = localStorage.getItem('rememberedPhone');
+      const rememberedPassword = localStorage.getItem('rememberedPassword');
 
-      if (phone.length < 10 || password.length < 6) {
-        alert("เบอร์โทรต้องมีอย่างน้อย 10 ตัว และรหัสผ่านต้องมากกว่า 6 ตัว");
-        return;
+      if (rememberedPhone && rememberedPassword) {
+        document.getElementById('phone').value = rememberedPhone;
+        document.getElementById('password').value = atob(rememberedPassword);
+        document.getElementById('remember-me').checked = true;
       }
+    }
 
-      const users = JSON.parse(localStorage.getItem('users')) || {};
-
-      if (users[phone]) {
-        alert('เบอร์นี้มีบัญชีอยู่แล้ว!');
-        return;
-      }
-
-      users[phone] = encryptPassword(password);
-      localStorage.setItem('users', JSON.stringify(users));
-
-      alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
-      showLogin();
-    });
-
-    // เข้าสู่ระบบ
     document.getElementById('login-form').addEventListener('submit', function(event) {
       event.preventDefault();
       const phone = document.getElementById('phone').value.trim();
       const password = document.getElementById('password').value.trim();
+      const rememberMe = document.getElementById('remember-me').checked;
       const users = JSON.parse(localStorage.getItem('users')) || {};
 
       if (users[phone] && users[phone] === encryptPassword(password)) {
-        localStorage.setItem('loggedInUser', phone); // บันทึกสถานะเข้าสู่ระบบ
+        localStorage.setItem('loggedInUser', phone);
+        
+        if (rememberMe) {
+          localStorage.setItem('rememberedPhone', phone);
+          localStorage.setItem('rememberedPassword', encryptPassword(password));
+        } else {
+          localStorage.removeItem('rememberedPhone');
+          localStorage.removeItem('rememberedPassword');
+        }
+
         alert('เข้าสู่ระบบสำเร็จ!');
-        window.location.href = 'stock_management.html'; // ไปที่หน้าหลัก
+        window.location.href = 'stock_management.html'; 
       } else {
         alert('เบอร์โทรหรือรหัสผ่านไม่ถูกต้อง');
       }
     });
 
-    // ตรวจสอบสถานะเมื่อโหลดหน้าเว็บ
+    document.getElementById('forgot-password-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const phone = document.getElementById('forgot-phone').value.trim();
+      const users = JSON.parse(localStorage.getItem('users')) || {};
+
+      if (users[phone]) {
+        const newPassword = prompt("กรอกรหัสผ่านใหม่:");
+        if (newPassword && newPassword.length >= 6) {
+          users[phone] = encryptPassword(newPassword);
+          localStorage.setItem('users', JSON.stringify(users));
+          alert('รีเซ็ตรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบใหม่');
+          showLogin();
+        } else {
+          alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัว');
+        }
+      } else {
+        alert('ไม่พบเบอร์โทรนี้ในระบบ');
+      }
+    });
+
+    loadRememberedUser();
     checkLogin();
   </script>
 
