@@ -3,127 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css"/>
   <title>ระบบจัดการสต็อกสินค้า</title>
   <style>
-    input[type="text"], input[type="number"], button {
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    input, button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
       font-size: 14px;
+      width: 80%;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
+
   <h1>ระบบจัดการสต็อกสินค้า CCKC</h1>
 
-  <div>
-    <h2>เพิ่ม/แก้ไขสินค้า</h2>
-    <form id="product-form">
-      <input type="hidden" id="product-id">
-      <input type="text" id="product-name" placeholder="ชื่อสินค้า" required>
-      <input type="number" id="product-quantity" placeholder="จำนวนสินค้า" required>
-      <button type="submit">เพิ่ม/แก้ไขสินค้า</button>
+  <div id="auth-section" class="container">
+    <h2>เข้าสู่ระบบ</h2>
+    <form id="login-form">
+      <input type="text" id="phone" placeholder="เบอร์โทร" required>
+      <input type="password" id="password" placeholder="รหัสผ่าน" required>
+      <button type="submit">เข้าสู่ระบบ</button>
     </form>
+    <p><a href="#" onclick="showForgotPassword()">ลืมรหัสผ่าน?</a></p>
+    <p>ยังไม่มีบัญชี? <a href="#" onclick="showRegister()">สมัครสมาชิก</a></p>
   </div>
 
-  <h2>รายการสินค้าทั้งหมด</h2>
-  <table id="product-table">
-    <thead>
-      <tr>
-        <th>ชื่อสินค้า</th>
-        <th>จำนวนสินค้า</th>
-        <th>วันที่แก้ไข</th>
-        <th>แก้ไข/ลบ</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- รายการสินค้าจะถูกแสดงที่นี่ -->
-    </tbody>
-  </table>
+  <div id="register-section" class="container" style="display:none;">
+    <h2>สมัครสมาชิก</h2>
+    <form id="register-form">
+      <input type="text" id="reg-phone" placeholder="เบอร์โทร" required>
+      <input type="password" id="reg-password" placeholder="รหัสผ่าน" required>
+      <button type="submit">สมัครสมาชิก</button>
+    </form>
+    <p>มีบัญชีแล้ว? <a href="#" onclick="showLogin()">เข้าสู่ระบบ</a></p>
+  </div>
 
   <script>
-    const googleScriptURL = 'https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv';
-
-    function renderTable() {
-      const products = JSON.parse(localStorage.getItem('products')) || [];
-      const tableBody = document.querySelector('#product-table tbody');
-      tableBody.innerHTML = '';
-      products.forEach((product, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${product.name}</td>
-          <td>${product.quantity}</td>
-          <td>${product.updatedAt}</td>
-          <td>
-            <button onclick="editProduct(${index})">แก้ไข</button>
-            <button onclick="deleteProduct(${index})">ลบ</button>
-          </td>
-        `;
-        tableBody.appendChild(row);
-      });
+    function showRegister() {
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('register-section').style.display = 'block';
     }
 
-    function saveToGoogleSheets(name, quantity) {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('quantity', quantity);
-
-      fetch(googleScriptURL, {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.text())
-      .then(data => {
-        console.log("บันทึกลง Google Sheets สำเร็จ:", data);
-      })
-      .catch(error => {
-        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
-      });
+    function showLogin() {
+      document.getElementById('auth-section').style.display = 'block';
+      document.getElementById('register-section').style.display = 'none';
     }
 
-    document.getElementById('product-form').addEventListener('submit', function(event) {
+    function encryptPassword(password) {
+      return btoa(password);  // เข้ารหัส Base64 (ควรใช้ hashing จริงจังมากกว่านี้)
+    }
+
+    // ตรวจสอบว่าผู้ใช้ล็อกอินหรือยัง
+    function checkLogin() {
+      const loggedInUser = localStorage.getItem('loggedInUser');
+      if (loggedInUser) {
+        window.location.href = 'stock_management.html'; // ไปยังหน้าหลักถ้าล็อกอินแล้ว
+      }
+    }
+
+    // สมัครสมาชิก
+    document.getElementById('register-form').addEventListener('submit', function(event) {
       event.preventDefault();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
 
-      const name = document.getElementById('product-name').value;
-      const quantity = parseInt(document.getElementById('product-quantity').value);
-      const productId = document.getElementById('product-id').value;
-
-      const products = JSON.parse(localStorage.getItem('products')) || [];
-      const updatedAt = new Date().toLocaleString(); // เพิ่มเวลาที่แก้ไขข้อมูล
-
-      if (productId) {
-        products[productId] = { name, quantity, updatedAt };
-      } else {
-        products.push({ name, quantity, updatedAt });
+      if (phone.length < 10 || password.length < 6) {
+        alert("เบอร์โทรต้องมีอย่างน้อย 10 ตัว และรหัสผ่านต้องมากกว่า 6 ตัว");
+        return;
       }
 
-      localStorage.setItem('products', JSON.stringify(products));
-      renderTable();
+      const users = JSON.parse(localStorage.getItem('users')) || {};
 
-      saveToGoogleSheets(name, quantity);
+      if (users[phone]) {
+        alert('เบอร์นี้มีบัญชีอยู่แล้ว!');
+        return;
+      }
 
-      document.getElementById('product-form').reset();
-      document.getElementById('product-id').value = '';
+      users[phone] = encryptPassword(password);
+      localStorage.setItem('users', JSON.stringify(users));
+
+      alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+      showLogin();
     });
 
-    function editProduct(index) {
-      const products = JSON.parse(localStorage.getItem('products'));
-      const product = products[index];
-      document.getElementById('product-name').value = product.name;
-      document.getElementById('product-quantity').value = product.quantity;
-      document.getElementById('product-id').value = index;
-    }
+    // เข้าสู่ระบบ
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const phone = document.getElementById('phone').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const users = JSON.parse(localStorage.getItem('users')) || {};
 
-    function deleteProduct(index) {
-      const products = JSON.parse(localStorage.getItem('products'));
-      products.splice(index, 1);
-      localStorage.setItem('products', JSON.stringify(products));
-      renderTable();
-    }
+      if (users[phone] && users[phone] === encryptPassword(password)) {
+        localStorage.setItem('loggedInUser', phone); // บันทึกสถานะเข้าสู่ระบบ
+        alert('เข้าสู่ระบบสำเร็จ!');
+        window.location.href = 'stock_management.html'; // ไปที่หน้าหลัก
+      } else {
+        alert('เบอร์โทรหรือรหัสผ่านไม่ถูกต้อง');
+      }
+    });
 
-    renderTable();
+    // ตรวจสอบสถานะเมื่อโหลดหน้าเว็บ
+    checkLogin();
   </script>
-
-  <!-- ปุ่มกดเพื่อเปิดไฟล์ product_data.html -->
-  <button onclick="window.open('product_data.html', '_blank')">ดูข้อมูลสินค้า</button>
 
 </body>
 </html>
