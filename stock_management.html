@@ -3,54 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css"/>
   <title>ระบบจัดการสต็อกสินค้า</title>
-  <style>input[type="text"], input[type="number"], button {font-size: 14px;}</style>
-<script src="https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv"></script>
-<script src="https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv"></script>
-<script src="https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv"></script>
-
-<script>
-// ตั้งค่า Firebase
-const firebaseConfig = {
-  apiKey: "API_KEY",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  storageBucket: "PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-</script>
-
-
-
-
-
-  
-  <script>
-  function checkAuth() {
-    const loggedInUser = localStorage.getItem('loggedInUser');
-    if (!loggedInUser) {
-      alert('กรุณาเข้าสู่ระบบก่อน!');
-      window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
     }
-  }
-  function logout() {
-    localStorage.removeItem('loggedInUser'); // ลบสถานะล็อกอิน
-    alert('ออกจากระบบเรียบร้อย!');
-    window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
-  }
-   checkAuth();
-</script>
-  
-<button onclick="logout()">ออกจากระบบ</button>
-
+    h1, h2 {
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    button {
+      padding: 5px 10px;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 5px;
+      margin-right: 10px;
+      width: 200px;
+    }
+  </style>
 </head>
 <body>
   <h1>ระบบจัดการสต็อกสินค้า CCKC</h1>
+
+  <!-- ปุ่มออกจากระบบ -->
+  <button onclick="logout()">ออกจากระบบ</button>
 
   <div>
     <h2>เพิ่ม/แก้ไขสินค้า</h2>
@@ -78,8 +73,23 @@ const db = firebase.firestore();
   </table>
 
   <script>
-    const googleScriptURL = 'https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv';
+    // ตรวจสอบการล็อกอิน
+    function checkAuth() {
+      const loggedInUser = localStorage.getItem('loggedInUser');
+      if (!loggedInUser) {
+        alert('กรุณาเข้าสู่ระบบก่อน!');
+        window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
+      }
+    }
 
+    // ออกจากระบบ
+    function logout() {
+      localStorage.removeItem('loggedInUser'); // ลบสถานะล็อกอิน
+      alert('ออกจากระบบเรียบร้อย!');
+      window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
+    }
+
+    // ฟังก์ชันแสดงข้อมูลในตาราง
     function renderTable() {
       const products = JSON.parse(localStorage.getItem('products')) || [];
       const tableBody = document.querySelector('#product-table tbody');
@@ -99,7 +109,9 @@ const db = firebase.firestore();
       });
     }
 
+    // ฟังก์ชันบันทึกข้อมูลลง Google Sheets
     function saveToGoogleSheets(name, quantity) {
+      const googleScriptURL = 'https://YOUR_GOOGLE_SCRIPT_URL/exec'; // แทน YOUR_GOOGLE_SCRIPT_URL ด้วย URL ของ Google Apps Script
       const formData = new FormData();
       formData.append('name', name);
       formData.append('quantity', quantity);
@@ -117,17 +129,23 @@ const db = firebase.firestore();
       });
     }
 
+    // ฟังก์ชันบันทึกข้อมูลสินค้า
     document.getElementById('product-form').addEventListener('submit', function(event) {
       event.preventDefault();
 
-      const name = document.getElementById('product-name').value;
-      const quantity = parseInt(document.getElementById('product-quantity').value);
+      const name = document.getElementById('product-name').value.trim();
+      const quantity = parseInt(document.getElementById('product-quantity').value.trim());
       const productId = document.getElementById('product-id').value;
+
+      if (!name || isNaN(quantity) || quantity < 0) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+        return;
+      }
 
       const products = JSON.parse(localStorage.getItem('products')) || [];
       const updatedAt = new Date().toLocaleString(); // เพิ่มเวลาที่แก้ไขข้อมูล
 
-      if (productId) {
+      if (productId !== '') {
         products[productId] = { name, quantity, updatedAt };
       } else {
         products.push({ name, quantity, updatedAt });
@@ -142,6 +160,7 @@ const db = firebase.firestore();
       document.getElementById('product-id').value = '';
     });
 
+    // ฟังก์ชันแก้ไขสินค้า
     function editProduct(index) {
       const products = JSON.parse(localStorage.getItem('products'));
       const product = products[index];
@@ -150,6 +169,7 @@ const db = firebase.firestore();
       document.getElementById('product-id').value = index;
     }
 
+    // ฟังก์ชันลบสินค้า
     function deleteProduct(index) {
       const products = JSON.parse(localStorage.getItem('products'));
       products.splice(index, 1);
@@ -157,11 +177,9 @@ const db = firebase.firestore();
       renderTable();
     }
 
+    // เรียกใช้งานฟังก์ชันตรวจสอบการล็อกอิน
+    checkAuth();
     renderTable();
   </script>
-
-  <!-- ปุ่มกดเพื่อเปิดไฟล์ product_data.html -->
-  <button onclick="window.open('product_data.html', '_blank')">ดูข้อมูลสินค้า</button>
-
 </body>
 </html>
