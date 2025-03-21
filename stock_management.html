@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบจัดการสต็อกสินค้า</title>
-  <link rel="stylesheet" href="style.css"/>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -110,23 +109,22 @@
       });
     }
 
-    // ฟังก์ชันบันทึกข้อมูลลง Google Sheets
-    function saveToGoogleSheets(name, quantity) {
-      const googleScriptURL = 'https://YOUR_GOOGLE_SCRIPT_URL/exec'; // แทน YOUR_GOOGLE_SCRIPT_URL ด้วย URL ของ Google Apps Script
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('quantity', quantity);
-
-      fetch(googleScriptURL, {
+    // ฟังก์ชันบันทึกข้อมูลลงเซิร์ฟเวอร์โฮสต์
+    function saveToServer(name, quantity) {
+      const serverURL = 'http://localhost:3000/api/save-product'; // แทนด้วย URL ของ API จริง
+      fetch(serverURL, {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, quantity })
       })
-      .then(response => response.text())
+      .then(response => response.json())
       .then(data => {
-        console.log("บันทึกลง Google Sheets สำเร็จ:", data);
+        console.log("บันทึกลงเซิร์ฟเวอร์สำเร็จ:", data.message);
       })
       .catch(error => {
-        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
+        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
       });
     }
 
@@ -155,7 +153,7 @@
       localStorage.setItem('products', JSON.stringify(products));
       renderTable();
 
-      saveToGoogleSheets(name, quantity);
+      saveToServer(name, quantity); // เรียกฟังก์ชันบันทึกลงเซิร์ฟเวอร์แทน Google Sheets
 
       document.getElementById('product-form').reset();
       document.getElementById('product-id').value = '';
