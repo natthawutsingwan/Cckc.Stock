@@ -36,27 +36,32 @@
       <!-- รายการสินค้าจะถูกแสดงที่นี่ -->
     </tbody>
   </table>
+  
+<script>
+  const GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSz66Baw-N5YuVuWraMeNJ-NE487yR2sDh5YqGL5iQWJtrl0IqCQY4NrP2eA-4UwAHhdEZ0e4McfDdt/pubhtml"; // แทน YOUR_WEB_APP_ID ด้วย ID ของ Web App จริง
 
-  <script>
-    // ตรวจสอบการล็อกอิน
-    function checkAuth() {
-      const loggedInUser = localStorage.getItem('loggedInUser');
-      if (!loggedInUser) {
-        alert('กรุณาเข้าสู่ระบบก่อน!');
-        window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
-      }
-    }
-
-    // ออกจากระบบ
-    function logout() {
-      localStorage.removeItem('loggedInUser'); // ลบสถานะล็อกอิน
-      alert('ออกจากระบบเรียบร้อย!');
+  // ตรวจสอบการล็อกอิน
+  function checkAuth() {
+    const loggedInUser = localStorage.getItem('loggedInUser');
+    if (!loggedInUser) {
+      alert('กรุณาเข้าสู่ระบบก่อน!');
       window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
     }
+  }
 
-    // ฟังก์ชันแสดงข้อมูลในตาราง
-    function renderTable() {
-      const products = JSON.parse(localStorage.getItem('products')) || [];
+  // ออกจากระบบ
+  function logout() {
+    localStorage.removeItem('loggedInUser'); // ลบสถานะล็อกอิน
+    alert('ออกจากระบบเรียบร้อย!');
+    window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
+  }
+
+  // ฟังก์ชันแสดงข้อมูลในตาราง
+  async function renderTable() {
+    try {
+      const response = await fetch(GOOGLE_SHEETS_URL);
+      const products = await response.json();
+
       const tableBody = document.querySelector('#product-table tbody');
       tableBody.innerHTML = '';
       products.forEach((product, index) => {
@@ -72,78 +77,59 @@
         `;
         tableBody.appendChild(row);
       });
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
+    }
+  }
+
+  // ฟังก์ชันบันทึกข้อมูลสินค้า
+  document.getElementById('product-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('product-name').value.trim();
+    const quantity = parseInt(document.getElementById('product-quantity').value.trim());
+
+    if (!name || isNaN(quantity) || quantity < 0) {
+      alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+      return;
     }
 
-    // ฟังก์ชันบันทึกข้อมูลลงเซิร์ฟเวอร์โฮสต์
-    function saveToServer(name, quantity) {
-      const serverURL = 'https://github.com/natthawutsingwan/Cckc.Stock/blob/main/output.csv'; // แทนด้วย URL ของ API จริง
-      fetch(serverURL, {
+    try {
+      const response = await fetch(GOOGLE_SHEETS_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ name, quantity })
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log("บันทึกลงเซิร์ฟเวอร์สำเร็จ:", data.message);
-      })
-      .catch(error => {
-        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
       });
+
+      const result = await response.json();
+      console.log(result.message);
+
+      renderTable(); // อัปเดตตารางหลังจากบันทึกข้อมูล
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
     }
 
-    // ฟังก์ชันบันทึกข้อมูลสินค้า
-    document.getElementById('product-form').addEventListener('submit', function(event) {
-      event.preventDefault();
+    document.getElementById('product-form').reset();
+  });
 
-      const name = document.getElementById('product-name').value.trim();
-      const quantity = parseInt(document.getElementById('product-quantity').value.trim());
-      const productId = document.getElementById('product-id').value;
+  // ฟังก์ชันแก้ไขสินค้า
+  function editProduct(index) {
+    // ปรับปรุงฟังก์ชันนี้เพื่อรองรับการแก้ไขข้อมูลใน Google Sheets
+    alert("ฟังก์ชันแก้ไขยังไม่พร้อมใช้งาน");
+  }
 
-      if (!name || isNaN(quantity) || quantity < 0) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-        return;
-      }
+  // ฟังก์ชันลบสินค้า
+  function deleteProduct(index) {
+    // ปรับปรุงฟังก์ชันนี้เพื่อรองรับการลบข้อมูลใน Google Sheets
+    alert("ฟังก์ชันลบยังไม่พร้อมใช้งาน");
+  }
 
-      const products = JSON.parse(localStorage.getItem('products')) || [];
-      const updatedAt = new Date().toLocaleString(); // เพิ่มเวลาที่แก้ไขข้อมูล
-
-      if (productId !== '') {
-        products[productId] = { name, quantity, updatedAt };
-      } else {
-        products.push({ name, quantity, updatedAt });
-      }
-
-      localStorage.setItem('products', JSON.stringify(products));
-      renderTable();
-
-      saveToServer(name, quantity); // เรียกฟังก์ชันบันทึกลงเซิร์ฟเวอร์แทน Google Sheets
-
-      document.getElementById('product-form').reset();
-      document.getElementById('product-id').value = '';
-    });
-
-    // ฟังก์ชันแก้ไขสินค้า
-    function editProduct(index) {
-      const products = JSON.parse(localStorage.getItem('products'));
-      const product = products[index];
-      document.getElementById('product-name').value = product.name;
-      document.getElementById('product-quantity').value = product.quantity;
-      document.getElementById('product-id').value = index;
-    }
-
-    // ฟังก์ชันลบสินค้า
-    function deleteProduct(index) {
-      const products = JSON.parse(localStorage.getItem('products'));
-      products.splice(index, 1);
-      localStorage.setItem('products', JSON.stringify(products));
-      renderTable();
-    }
-
-    // เรียกใช้งานฟังก์ชันตรวจสอบการล็อกอิน
-    checkAuth();
-    renderTable();
-  </script>
+  // เรียกใช้งานฟังก์ชันตรวจสอบการล็อกอิน
+  checkAuth();
+  renderTable();
+</script>
+  
 </body>
 </html>
