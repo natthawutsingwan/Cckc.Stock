@@ -36,152 +36,154 @@
       <!-- รายการสินค้าจะถูกแสดงที่นี่ -->
     </tbody>
   </table>
-  
-<script>
-  const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxi7UZCPePErcyTsYInWrs3UvPR_k231KBJ90GVnW4w4T0SIJz14W7_XncWMkrpkP-I5w/exec"; // แทน YOUR_WEB_APP_ID ด้วย ID ของ Web App จริง
 
-  // ตรวจสอบการล็อกอิน
-  function checkAuth() {
-    const loggedInUser = localStorage.getItem('loggedInUser');
-    if (!loggedInUser) {
-      alert('กรุณาเข้าสู่ระบบก่อน!');
+  <script>
+    const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxi7UZCPePErcyTsYInWrs3UvPR_k231KBJ90GVnW4w4T0SIJz14W7_XncWMkrpkP-I5w/exec"; // แทน YOUR_WEB_APP_ID ด้วย ID ของ Web App จริง
+
+    // ตรวจสอบการล็อกอิน
+    function checkAuth() {
+      const loggedInUser = localStorage.getItem('loggedInUser');
+      if (!loggedInUser) {
+        alert('กรุณาเข้าสู่ระบบก่อน!');
+        window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
+      }
+    }
+
+    // ออกจากระบบ
+    function logout() {
+      localStorage.removeItem('loggedInUser'); // ลบสถานะล็อกอิน
+      alert('ออกจากระบบเรียบร้อย!');
       window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
     }
-  }
 
-  // ออกจากระบบ
-  function logout() {
-    localStorage.removeItem('loggedInUser'); // ลบสถานะล็อกอิน
-    alert('ออกจากระบบเรียบร้อย!');
-    window.location.href = 'index.html'; // กลับไปหน้าเข้าสู่ระบบ
-  }
+    // ฟังก์ชันแสดงข้อมูลในตาราง
+    async function renderTable() {
+      try {
+        const response = await fetch(GOOGLE_SHEETS_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const products = await response.json();
 
-  // ฟังก์ชันแสดงข้อมูลในตาราง
-  async function renderTable() {
-  try {
-    const response = await fetch(GOOGLE_SHEETS_URL);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        const tableBody = document.querySelector('#product-table tbody');
+        tableBody.innerHTML = '';
+        products.forEach((product, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${product.name}</td>
+            <td>${product.quantity}</td>
+            <td>${product.updatedAt || ''}</td>
+            <td>
+              <button onclick="editProduct(${index})">แก้ไข</button>
+              <button onclick="deleteProduct(${index})">ลบ</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
+      }
     }
-    const products = await response.json();
 
-    const tableBody = document.querySelector('#product-table tbody');
-    tableBody.innerHTML = '';
-    products.forEach((product, index) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${product.name}</td>
-        <td>${product.quantity}</td>
-        <td>${product.updatedAt || ''}</td>
-        <td>
-          <button onclick="editProduct(${index})">แก้ไข</button>
-          <button onclick="deleteProduct(${index})">ลบ</button>
-        </td>
-      `;
-      tableBody.appendChild(row);
+    // ฟังก์ชันบันทึกข้อมูลสินค้า
+    document.getElementById('product-form').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('product-name').value.trim();
+      const quantity = parseInt(document.getElementById('product-quantity').value.trim());
+
+      if (!name || isNaN(quantity) || quantity < 0) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+        return;
+      }
+
+      try {
+        const response = await fetch(GOOGLE_SHEETS_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name, quantity })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log(result.message);
+
+        renderTable(); // อัปเดตตารางหลังจากบันทึกข้อมูล
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
+      }
+
+      document.getElementById('product-form').reset();
     });
-  } catch (error) {
-    console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
-  }
-}
 
-document.getElementById('product-form').addEventListener('submit', async function(event) {
-  event.preventDefault();
+    // ฟังก์ชันแก้ไขสินค้า
+    async function editProduct(index) {
+      const name = prompt("กรุณากรอกชื่อสินค้าใหม่:");
+      const quantity = parseInt(prompt("กรุณากรอกจำนวนสินค้าใหม่:"));
 
-  const name = document.getElementById('product-name').value.trim();
-  const quantity = parseInt(document.getElementById('product-quantity').value.trim());
+      if (!name || isNaN(quantity) || quantity < 0) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+        return;
+      }
 
-  if (!name || isNaN(quantity) || quantity < 0) {
-    alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-    return;
-  }
+      try {
+        const response = await fetch(GOOGLE_SHEETS_URL, {
+          method: 'PUT', // ใช้ PUT สำหรับการแก้ไข
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ index, name, quantity })
+        });
 
-  try {
-    const response = await fetch(GOOGLE_SHEETS_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name, quantity })
-    });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        console.log(result.message);
+
+        renderTable(); // อัปเดตตารางหลังจากแก้ไขข้อมูล
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
+      }
     }
 
-    const result = await response.json();
-    console.log(result.message);
+    // ฟังก์ชันลบสินค้า
+    async function deleteProduct(index) {
+      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?")) {
+        return;
+      }
 
-    renderTable(); // อัปเดตตารางหลังจากบันทึกข้อมูล
-  } catch (error) {
-    console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
-  }
+      try {
+        const response = await fetch(GOOGLE_SHEETS_URL, {
+          method: 'DELETE', // ใช้ DELETE สำหรับการลบ
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ index })
+        });
 
-  document.getElementById('product-form').reset();
-});
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-  // ฟังก์ชันบันทึกข้อมูลสินค้า
-  document.getElementById('product-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
+        const result = await response.json();
+        console.log(result.message);
 
-    const name = document.getElementById('product-name').value.trim();
-    const quantity = parseInt(document.getElementById('product-quantity').value.trim());
-
-    if (!name || isNaN(quantity) || quantity < 0) {
-      alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-      return;
+        renderTable(); // อัปเดตตารางหลังจากลบข้อมูล
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการลบข้อมูล:", error);
+      }
     }
 
-    try {
-      const response = await fetch(GOOGLE_SHEETS_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, quantity })
-      });
-
-      const result = await response.json();
-      console.log(result.message);
-
-      renderTable(); // อัปเดตตารางหลังจากบันทึกข้อมูล
-    } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
-    }
-
-    document.getElementById('product-form').reset();
-  });
-
-  // ฟังก์ชันแก้ไขสินค้า
-  function editProduct(index) {
-    // ปรับปรุงฟังก์ชันนี้เพื่อรองรับการแก้ไขข้อมูลใน Google Sheets
-    alert("ฟังก์ชันแก้ไขยังไม่พร้อมใช้งาน");
-  }
-
-  // ฟังก์ชันลบสินค้า
-  function deleteProduct(index) {
-    // ปรับปรุงฟังก์ชันนี้เพื่อรองรับการลบข้อมูลใน Google Sheets
-    alert("ฟังก์ชันลบยังไม่พร้อมใช้งาน");
-  }
-
-  // เรียกใช้งานฟังก์ชันตรวจสอบการล็อกอิน
-  checkAuth();
-  renderTable();
-  fetch(GOOGLE_SHEETS_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ name, quantity }),
-  mode: 'no-cors' // ปิดการตรวจสอบ CORS
-})
-.then(response => {
-  console.log("ข้อมูลถูกบันทึกแล้ว");
-})
-.catch(error => {
-  console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
-});
-</script>
-  
+    // เรียกใช้งานฟังก์ชันตรวจสอบการล็อกอิน
+    checkAuth();
+    renderTable();
+  </script>
 </body>
 </html>
