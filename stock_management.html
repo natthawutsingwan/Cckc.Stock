@@ -129,6 +129,20 @@
   // เรียกใช้งานฟังก์ชันตรวจสอบการล็อกอิน
   checkAuth();
   renderTable();
+  fetch(GOOGLE_SHEETS_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ name, quantity }),
+  mode: 'no-cors' // ปิดการตรวจสอบ CORS
+})
+.then(response => {
+  console.log("ข้อมูลถูกบันทึกแล้ว");
+})
+.catch(error => {
+  console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
+});
 </script>
   
 </body>
