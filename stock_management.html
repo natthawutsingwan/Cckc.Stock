@@ -18,6 +18,7 @@
       <input type="hidden" id="product-id">
       <input type="text" id="product-name" placeholder="ชื่อสินค้า" required>
       <input type="number" id="product-quantity" placeholder="จำนวนสินค้า" required>
+      <input type="number" id="product-price" placeholder="ราคาสินค้า" required>
       <button type="submit">เพิ่ม/แก้ไขสินค้า</button>
     </form>
   </div>
@@ -39,7 +40,8 @@
   </table>
 
   <script>
-    const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbw6JLFg0qBWbz8HlVY6GyxlV1De5_sTBf9RgjKFjH5E/dev"; // แทน YOUR_WEB_APP_ID ด้วย ID ของ Web App จริง
+    const GOOGLE_SHEETS_URL =
+     "https://script.google.com/macros/s/AKfycbw6JLFg0qBWbz8HlVY6GyxlV1De5_sTBf9RgjKFjH5E/dev"; // แทน YOUR_WEB_APP_ID ด้วย ID ของ Web App จริง
 
     // ตรวจสอบการล็อกอิน
     function checkAuth() {
@@ -86,73 +88,108 @@
       }
     }
 
-    // ฟังก์ชันบันทึกข้อมูลสินค้า
-    document.getElementById('product-form').addEventListener('submit', async function(event) {
-      event.preventDefault();
+// ฟังก์ชันแสดงข้อมูลในตาราง
+async function renderTable() {
+  try {
+    const response = await fetch(GOOGLE_SHEETS_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const products = await response.json();
 
-      const name = document.getElementById('product-name').value.trim();
-      const quantity = parseInt(document.getElementById('product-quantity').value.trim());
+    const tableBody = document.querySelector('#product-table tbody');
+    tableBody.innerHTML = '';
+    products.forEach((product, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${product['ชื่อสินค้า']}</td>
+        <td>${product['จำนวนสินค้า']}</td>
+        <td>${product['ราคาสินค้า']}</td>
+        <td>${product['วันที่แก้ไข'] || ''}</td>
+        <td>
+          <button onclick="editProduct(${index})">แก้ไข</button>
+          <button onclick="deleteProduct(${index})">ลบ</button>
+        </td>
+      `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
+  }
+}
 
-      if (!name || isNaN(quantity) || quantity < 0) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-        return;
-      }
+// ฟังก์ชันบันทึกข้อมูลสินค้า
+document.getElementById('product-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
 
-      try {
-        const response = await fetch(GOOGLE_SHEETS_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ name, quantity })
-        });
+  const name = document.getElementById('product-name').value.trim();
+  const quantity = parseInt(document.getElementById('product-quantity').value.trim());
+  const price = parseFloat(document.getElementById('product-price').value.trim());
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+  if (!name || isNaN(quantity) || quantity < 0 || isNaN(price) || price < 0) {
+    alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+    return;
+  }
 
-        const result = await response.json();
-        console.log(result.message);
-
-        renderTable(); // อัปเดตตารางหลังจากบันทึกข้อมูล
-      } catch (error) {
-        console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
-      }
-
-      document.getElementById('product-form').reset();
+  try {
+    const response = await fetch(GOOGLE_SHEETS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, quantity, price })
     });
 
-    // ฟังก์ชันแก้ไขสินค้า
-    async function editProduct(index) {
-      const name = prompt("กรุณากรอกชื่อสินค้าใหม่:");
-      const quantity = parseInt(prompt("กรุณากรอกจำนวนสินค้าใหม่:"));
-
-      if (!name || isNaN(quantity) || quantity < 0) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-        return;
-      }
-
-      try {
-        const response = await fetch(GOOGLE_SHEETS_URL, {
-          method: 'PUT', // ใช้ PUT สำหรับการแก้ไข
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ index, name, quantity })
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log(result.message);
-
-        renderTable(); // อัปเดตตารางหลังจากแก้ไขข้อมูล
-      } catch (error) {
-        console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
-      }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const result = await response.json();
+    console.log(result.message);
+
+    renderTable(); // อัปเดตตารางหลังจากบันทึกข้อมูล
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
+  }
+
+  document.getElementById('product-form').reset();
+});
+
+// ฟังก์ชันแก้ไขสินค้า
+async function editProduct(index) {
+  const name = prompt("กรุณากรอกชื่อสินค้าใหม่:");
+  const quantity = parseInt(prompt("กรุณากรอกจำนวนสินค้าใหม่:"));
+  const price = parseFloat(prompt("กรุณากรอกราคาสินค้าใหม่:"));
+
+  if (!name || isNaN(quantity) || quantity < 0 || isNaN(price) || price < 0) {
+    alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+    return;
+  }
+
+  try {
+    const response = await fetch(GOOGLE_SHEETS_URL, {
+      method: 'PUT', // ใช้ PUT สำหรับการแก้ไข
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ index, name, quantity, price })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(result.message);
+
+    renderTable(); // อัปเดตตารางหลังจากแก้ไขข้อมูล
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
+  }
+} 
+
+
+
 
     // ฟังก์ชันลบสินค้า
     async function deleteProduct(index) {
